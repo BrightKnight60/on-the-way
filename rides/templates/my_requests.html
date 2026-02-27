@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load profile_tags %}
+
+{% block content %}
+<div class="requests-page">
+<div class="page-header">
+  <div>
+    <h1 class="page-title">My requests</h1>
+    <p class="page-subtitle">Track rides you have requested to join.</p>
+  </div>
+  <div>
+    <a href="{% url 'rides:rider_search' %}" class="btn-primary btn-sm">Find more rides</a>
+  </div>
+</div>
+
+{% if requests %}
+<div class="card-list">
+  {% for req in requests %}
+      <a href="{% url 'rides:request_detail' req_pk=req.pk %}" class="ride-card">
+        <div class="ride-main">
+          <div class="ride-route">
+            <div class="route-point">
+              <span class="route-dot"></span>
+              <span class="route-value">{{ req.ride.origin }}</span>
+            </div>
+            <div class="route-point">
+              <span class="route-dot end"></span>
+              <span class="route-value">{{ req.ride.destination }}{% if req.ride.destination_state %}, {{ req.ride.destination_state }}{% endif %}</span>
+            </div>
+          </div>
+          <div class="ride-meta">
+            <span>{{ req.ride.departure_time|date:"M j, Y" }}</span>
+            <span>{{ req.ride.departure_time|time:"g:i A" }}</span>
+            <span class="badge badge-{{ req.status }}">{{ req.get_status_display }}</span>
+          </div>
+        </div>
+        <div class="ride-secondary">
+          <span>{{ req.seats_requested }} seat{{ req.seats_requested|pluralize }} requested</span>
+          {% if req.ride.price_per_seat %}
+            <span>${{ req.ride.price_per_seat }} / seat</span>
+          {% else %}
+            <span>Free ride</span>
+          {% endif %}
+        </div>
+      </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <h2>No requests yet</h2>
+    <p>Search for rides and request a seat to get started.</p>
+    <a href="{% url 'rides:rider_search' %}" class="btn-primary">Find a ride</a>
+</div>
+{% endif %}
+</div>
+{% endblock %}

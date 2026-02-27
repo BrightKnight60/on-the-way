@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% load profile_tags %}
+
+{% block content %}
+<h1 class="welcome-heading">Welcome, {{ request.user.first_name|default:request.user.username }}</h1>
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Find a ride</h2>
+    <p class="page-subtitle">Search by pickup, destination, or state. Drivers whose routes pass near you will also appear.</p>
+  </div>
+</div>
+
+<form method="get" onsubmit="return checkForm(this)" id="search-form">
+  {{ form.origin_lat }}
+  {{ form.origin_lng }}
+  {{ form.dest_lat }}
+  {{ form.dest_lng }}
+  <div class="search-panel">
+    <div class="search-inputs-wrap">
+      <div class="search-inputs">
+        <div class="search-row">
+          <span class="search-icon"></span>
+          {{ form.origin }}
+        </div>
+        <div class="search-row">
+          <span class="search-icon square"></span>
+          {{ form.destination }}
+        </div>
+        <div class="search-row">
+          <span class="search-icon" style="border-style:dashed;"></span>
+          {{ form.state }}
+        </div>
+      </div>
+      <button type="button" class="swap-btn" id="swap-btn" title="Swap origin and destination">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 4l-4 4 4 4"/>
+          <path d="M17 20l4-4-4-4"/>
+          <line x1="3" y1="8" x2="21" y2="8"/>
+          <line x1="21" y1="16" x2="3" y2="16"/>
+        </svg>
+      </button>
+    </div>
+    <p class="search-error" id="search-error" style="display:none;"></p>
+    <div class="search-footer">
+      <span class="search-hint">Select from suggestions for nearby &amp; along-the-way matches</span>
+      <button type="submit" class="btn-primary btn-sm">Search</button>
+    </div>
+  </div>
+</form>
+
+{# ── Favorites ── #}
+<div class="favorites-section">
+  <h3 class="shortcut-heading">Favorites</h3>
+  <div class="favorites-card">
+  <div class="favorites-row">
+    {% for fav in favorites %}
+      {% if fav.address %}
+        <button type="button" class="fav-item fav-filled" data-fav='{{ fav.pk }}'
+          onclick="fillFavorite(this)">
+          <span class="fav-icon">
+            {% if fav.slot == "home" %}
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            {% elif fav.slot == "work" %}
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+            {% else %}
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {% endif %}
+          </span>
+          <span class="fav-label">{{ fav.label|default:fav.get_slot_display }}</span>
+        </button>
+      {% else %}
+        <button type="button" class="fav-item fav-empty" onclick="showAddFav({{ fav.pk }}, '{{ fav.slot }}', '{{ fav.label|default:fav.get_slot_display }}')">
+          <span class="fav-icon fav-icon-add">+</span>
+          <span class="fav-label">{{ fav.label|default:fav.get_slot_display }}</span>
+        </button>
+      {% endif %}
+    {% endfor %}
+
+    {% if favorites|length < 4 %}
+      <button type="button" class="fav-item fav-empty" onclick="showAddFav(null, 'custom', '')">
+        <span class="fav-icon fav-icon-add">+</span>
+        <span class="fav-label">Add</span>
+      </button>
+    {% endif %}
+  </div>
+  </div>
+</div>
+
+{# ── Add/Edit Favorite Modal ── #}
+<div class="fav-form-overlay" id="fav-form-overlay" style="display:none;">
+  <form method="post" action="{% url 'rides:save_favorite' %}" class="fav-form card">
+    {% csrf_token %}
+    <h3 class="fav-form-title" id="fav-form-title">Save location</h3>
+    <input type="hidden" name="fav_id" id="fav-form-id" value="" />
+    <div class="form-field">
+      <label for="fav-label-input">Name</label>
+      <input type="text" id="fav-label-input" name="label" placeholder="e.g. Gym, Mom's house" class="search-input" />
+    </div>
+    <div class="form-field">
+      <label for="fav-address-input">Address</label>
+      <input type="text" id="fav-address-input" name="address" placeholder="Start typing an address..."
+        data-autocomplete="address"
+        data-lat-target="fav-lat-input"
+        data-lng-target="fav-lng-input"
+        autocomplete="off" class="search-input" />
+    </div>
+    <input type="hidden" name="lat" id="fav-lat-input" />
+    <input type="hidden" name="lng" id="fav-lng-input" />
+    <div class="form-actions">
+      <button type="button" class="btn-secondary btn-sm" onclick="hideFavForm()">Cancel</button>
+      <button type="submit" class="btn-primary btn-sm">Save</button>
+    </div>
+  </form>
+</div>
+
+{# ── Recents ── #}
+{% if recents %}
+<div class="recents-section">
+  <h3 class="shortcut-heading">Recents</h3>
+  <div class="recents-list">
+    {% for r in recents %}
+      <button type="button" class="recent-item" data-idx="{{ forloop.counter0 }}" onclick="fillRecent({{ forloop.counter0 }})">
+        <span class="recent-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </span>
+        <span class="recent-text">
+          <span class="recent-origin">{{ r.origin }}</span>
+          <span class="recent-arrow">&rarr;</span>
+          <span class="recent-dest">{{ r.destination }}</span>
+        </span>
+      </button>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# ── Sponsor ad ── #}
+<div class="sponsor-ad-section">
+  <h3 class="shortcut-heading">Enjoy the ride, and the rewards</h3>
+  <div class="sponsor-ad-card card" style="display:flex; align-items:center; gap:1rem; padding:1.1rem 1.25rem;">
+    <span style="display:inline-flex; align-items:center; justify-content:center; width:56px; height:56px; min-width:56px; border-radius:50%; background:#e5e7eb; font-size:0.7rem; font-weight:700; letter-spacing:0.02em; color:#000;">ATMOS</span>
+    <div style="flex:1; min-width:0;">
+      <p style="margin:0; font-size:1.05rem; font-weight:700; color:#000; line-height:1.35;">Atmos Rewards by Alaska and Hawaiian Airlines</p>
+      <p style="margin:0.35rem 0 0; font-size:0.9rem; color:#6b7280; line-height:1.4;">You're earning 2-3 points per $1 on qualifying rides.</p>
+    </div>
+  </div>
+</div>
+
+{# ── JSON data for JS ── #}
+<script type="application/json" id="favorites-data">{{ favorites_json|safe }}</script>
+<script type="application/json" id="recents-data">{{ recents_json|safe }}</script>
+
+{% if rider_coords %}
+  <script type="application/json" id="rider-coords">{{ rider_coords|safe }}</script>
+{% endif %}
+
+<script>
+var _favs = JSON.parse(document.getElementById("favorites-data").textContent);
+var _recents = JSON.parse(document.getElementById("recents-data").textContent);
+
+function checkForm(form) {
+  var origin = form.querySelector("[name='origin']").value.trim();
+  var destination = form.querySelector("[name='destination']").value.trim();
+  var state = form.querySelector("[name='state']").value.trim();
+  var errEl = document.getElementById("search-error");
+  if (!origin && !destination && !state) {
+    errEl.textContent = "Please enter at least a pickup location, destination, or state.";
+    errEl.style.display = "block";
+    return false;
+  }
+  errEl.style.display = "none";
+  return true;
+}
+
+function _setField(id, val) {
+  var el = document.getElementById(id);
+  if (el) el.value = (val != null && val !== undefined) ? val : "";
+}
+
+function fillFavorite(btn) {
+  var favId = parseInt(btn.getAttribute("data-fav"));
+  var fav = _favs.find(function(f) { return f.id === favId; });
+  if (!fav || !fav.address) return;
+  _setField("id_destination", fav.address);
+  _setField("id_dest_lat", fav.lat);
+  _setField("id_dest_lng", fav.lng);
+  _setField("id_state", "");
+}
+
+function fillRecent(idx) {
+  var r = _recents[idx];
+  if (!r) return;
+  _setField("id_origin", r.origin);
+  _setField("id_origin_lat", r.origin_lat);
+  _setField("id_origin_lng", r.origin_lng);
+  _setField("id_destination", r.destination);
+  _setField("id_dest_lat", r.dest_lat);
+  _setField("id_dest_lng", r.dest_lng);
+  _setField("id_state", "");
+}
+
+// Swap origin and destination
+document.getElementById("swap-btn").addEventListener("click", function() {
+  var o = document.getElementById("id_origin");
+  var d = document.getElementById("id_destination");
+  var olat = document.getElementById("id_origin_lat");
+  var olng = document.getElementById("id_origin_lng");
+  var dlat = document.getElementById("id_dest_lat");
+  var dlng = document.getElementById("id_dest_lng");
+
+  var tmp;
+  tmp = o.value; o.value = d.value; d.value = tmp;
+  tmp = olat.value; olat.value = dlat.value; dlat.value = tmp;
+  tmp = olng.value; olng.value = dlng.value; dlng.value = tmp;
+});
+
+// Favorite add/edit form
+function showAddFav(favId, slot, label) {
+  document.getElementById("fav-form-id").value = favId || "";
+  document.getElementById("fav-label-input").value = label || "";
+  document.getElementById("fav-address-input").value = "";
+  document.getElementById("fav-lat-input").value = "";
+  document.getElementById("fav-lng-input").value = "";
+  var title = favId ? "Set " + (label || slot) + " location" : "Add favorite";
+  document.getElementById("fav-form-title").textContent = title;
+  // Hide label field for Home/Work since label is fixed
+  document.getElementById("fav-label-input").parentElement.style.display =
+    (slot === "home" || slot === "work") ? "none" : "";
+  document.getElementById("fav-form-overlay").style.display = "flex";
+}
+
+function hideFavForm() {
+  document.getElementById("fav-form-overlay").style.display = "none";
+}
+
+document.getElementById("fav-form-overlay").addEventListener("click", function(e) {
+  if (e.target === this) hideFavForm();
+});
+
+// Auto-submit search when user selects from autocomplete (origin or destination)
+document.addEventListener("address-selected", function(e) {
+  var targetId = e.target && e.target.id;
+  if (targetId === "id_origin" || targetId === "id_destination") {
+    var form = document.getElementById("search-form");
+    if (form && checkForm(form)) form.submit();
+  }
+});
+</script>
+
+{% if searched %}
+  {% if rides %}
+    <div class="ride-map mt-lg" data-rides="{{ rides_json }}"></div>
+  {% endif %}
+
+  <div class="mt-lg">
+    {% if rides %}
+      <div class="card-list">
+        {% for ride in rides %}
+          <div class="ride-card" style="border-left: 3px solid {% user_color ride.driver %}"
+            {% if ride.est_detour %}
+              data-detour-check='{"origin_lat":{{ ride.origin_lat }},"origin_lng":{{ ride.origin_lng }},"dest_lat":{{ ride.dest_lat }},"dest_lng":{{ ride.dest_lng }},"route_duration":{{ ride.route_duration|default:"0" }}}'
+            {% endif %}
+          >
+            <div class="ride-main">
+              <div class="ride-route">
+                <div class="route-point">
+                  <span class="route-dot"></span>
+                  <span class="route-value">{{ ride.origin }}</span>
+                </div>
+                <div class="route-point">
+                  <span class="route-dot end"></span>
+                  <span class="route-value">{{ ride.destination }}{% if ride.destination_state %}, {{ ride.destination_state }}{% endif %}</span>
+                </div>
+              </div>
+              <div class="ride-meta">
+                <span>{{ ride.departure_time|date:"M j, Y" }}</span>
+                <span>{{ ride.departure_time|time:"g:i A" }}</span>
+                <span class="badge badge-open">Open</span>
+                {% if ride.est_detour %}
+                  <span class="detour-badge detour-loading">~{{ ride.est_detour }} min detour</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="ride-secondary">
+              <span>Driver: {% user_chip ride.driver %}</span>
+              <span>{{ ride.total_seats }} seat{{ ride.total_seats|pluralize }}</span>
+              {% if ride.price_per_seat %}
+                <span>${{ ride.price_per_seat }} / seat</span>
+              {% else %}
+                <span>Free ride</span>
+              {% endif %}
+              {% if ride.est_detour %}
+                <span class="badge-along">Along the way</span>
+              {% endif %}
+            </div>
+            {% if ride.driver != request.user %}
+              <div class="ride-actions">
+                <form method="post" action="{% url 'rides:request_ride' pk=ride.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-primary btn-sm">Request seat</button>
+                </form>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <h2>No rides found</h2>
+        <p>Try broadening your search or check back later.</p>
+      </div>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

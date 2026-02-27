@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% load profile_tags %}
+
+{% block content %}
+<div class="ratings-page">
+<div class="page-header">
+  <h1 class="page-title">Rate your rides</h1>
+  <p class="page-subtitle">Rate ride smoothness based on disruptions.</p>
+</div>
+
+{% if driver_items or rider_items %}
+  {% if driver_items %}
+  <h2 class="ratings-section-title">As driver</h2>
+  <div class="card-list">
+    {% for item in driver_items %}
+      <div class="rating-card ride-card">
+        <div class="ride-main">
+          <div class="ride-route">
+            <div class="route-point">
+              <span class="route-dot"></span>
+              <span class="route-value">{{ item.ride.origin }}</span>
+            </div>
+            <div class="route-point">
+              <span class="route-dot end"></span>
+              <span class="route-value">{{ item.ride.destination }}{% if item.ride.destination_state %}, {{ item.ride.destination_state }}{% endif %}</span>
+            </div>
+          </div>
+          <div class="ride-meta">
+            <span>{{ item.ride.departure_time|date:"M j, Y" }}</span>
+            <span>{{ item.ride.departure_time|time:"g:i A" }}</span>
+            {% user_chip item.ratee %}
+          </div>
+        </div>
+        <div class="rating-card-body">
+          {% if item.rating %}
+            {% if item.rating.did_not_show_up %}
+              <span class="badge badge-cancelled">No show</span>
+            {% else %}
+              <span class="rating-done">Rated {{ item.rating.stars }} ★</span>
+            {% endif %}
+          {% else %}
+            <form method="post" action="{% url 'rides:submit_rating' %}" class="rating-form" data-is-driver="true">
+              {% csrf_token %}
+              <input type="hidden" name="ride_request_pk" value="{{ item.ride_request.pk }}">
+              <input type="hidden" name="ratee_id" value="{{ item.ratee.id }}">
+              <div class="rating-form-inner">
+                <label class="rating-noshow-label">
+                  <input type="checkbox" name="did_not_show_up" value="1" class="rating-dnsu-cb">
+                  No show
+                </label>
+                <div class="rating-scale-row">
+                  <span class="rating-scale-min">Severely disrupted</span>
+                  <div class="rating-stars-container">
+                    <div class="rating-stars" data-name="stars">
+                      {% for i in "12345" %}
+                        <button type="button" class="rating-star" data-value="{{ i }}">★</button>
+                      {% endfor %}
+                    </div>
+                    <input type="hidden" name="stars" value="">
+                  </div>
+                  <span class="rating-scale-max">Very smooth</span>
+                </div>
+                <div class="rating-comment-wrap" style="display:none;">
+                  <label for="comment-{{ item.ride_request.pk }}">Comment (required for 1-star)</label>
+                  <textarea name="comment" id="comment-{{ item.ride_request.pk }}" rows="3" placeholder="Describe the problem..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary btn-sm">Submit rating</button>
+              </div>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if rider_items %}
+  <h2 class="ratings-section-title">As rider</h2>
+  <div class="card-list">
+    {% for item in rider_items %}
+      <div class="rating-card ride-card">
+        <div class="ride-main">
+          <div class="ride-route">
+            <div class="route-point">
+              <span class="route-dot"></span>
+              <span class="route-value">{{ item.ride.origin }}</span>
+            </div>
+            <div class="route-point">
+              <span class="route-dot end"></span>
+              <span class="route-value">{{ item.ride.destination }}{% if item.ride.destination_state %}, {{ item.ride.destination_state }}{% endif %}</span>
+            </div>
+          </div>
+          <div class="ride-meta">
+            <span>{{ item.ride.departure_time|date:"M j, Y" }}</span>
+            <span>{{ item.ride.departure_time|time:"g:i A" }}</span>
+            {% user_chip item.ratee %}
+          </div>
+        </div>
+        <div class="rating-card-body">
+          {% if item.rating %}
+            <span class="rating-done">Rated {{ item.rating.stars }} ★</span>
+          {% else %}
+            <form method="post" action="{% url 'rides:submit_rating' %}" class="rating-form" data-is-driver="false">
+              {% csrf_token %}
+              <input type="hidden" name="ride_request_pk" value="{{ item.ride_request.pk }}">
+              <input type="hidden" name="ratee_id" value="{{ item.ratee.id }}">
+              <div class="rating-form-inner">
+                <div class="rating-scale-row">
+                  <span class="rating-scale-min">Severely disrupted</span>
+                  <div class="rating-stars-container">
+                    <div class="rating-stars" data-name="stars">
+                      {% for i in "12345" %}
+                        <button type="button" class="rating-star" data-value="{{ i }}">★</button>
+                      {% endfor %}
+                    </div>
+                    <input type="hidden" name="stars" value="">
+                  </div>
+                  <span class="rating-scale-max">Very smooth</span>
+                </div>
+                <div class="rating-comment-wrap" style="display:none;">
+                  <label for="comment-r{{ item.ride_request.pk }}">Comment (required for 1-star)</label>
+                  <textarea name="comment" id="comment-r{{ item.ride_request.pk }}" rows="3" placeholder="Describe the problem..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary btn-sm">Submit rating</button>
+              </div>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% else %}
+  <div class="empty-state">
+    <h2>No rides to rate</h2>
+    <p>Complete a ride (as driver or rider) to rate it here.</p>
+  </div>
+{% endif %}
+</div>
+
+<script>
+(function() {
+  var forms = document.querySelectorAll('.rating-form');
+  forms.forEach(function(form) {
+    var isDriver = form.getAttribute('data-is-driver') === 'true';
+    var dnsuCb = form.querySelector('.rating-dnsu-cb');
+    var scaleRow = form.querySelector('.rating-scale-row');
+    var starsWrap = form.querySelector('.rating-scale-row');
+    var commentWrap = form.querySelector('.rating-comment-wrap');
+    var starsInput = form.querySelector('input[name="stars"]');
+    var stars = form.querySelectorAll('.rating-star');
+
+    function setStarsHighlight(upTo) {
+      stars.forEach(function(s) {
+        var v = parseInt(s.getAttribute('data-value'), 10);
+        s.classList.toggle('selected', v <= upTo);
+      });
+    }
+
+    function updateUI() {
+      var dnsu = dnsuCb && dnsuCb.checked;
+      if (dnsu) {
+        if (starsWrap) starsWrap.style.display = 'none';
+        if (commentWrap) commentWrap.style.display = 'none';
+        starsInput.value = '';
+        stars.forEach(function(s) { s.classList.remove('selected'); });
+      } else {
+        if (starsWrap) starsWrap.style.display = '';
+        var val = parseInt(starsInput.value, 10);
+        if (val === 1 && commentWrap) {
+          commentWrap.style.display = '';
+        } else if (commentWrap) {
+          commentWrap.style.display = 'none';
+        }
+        setStarsHighlight(val || 0);
+      }
+    }
+
+    if (dnsuCb) {
+      dnsuCb.addEventListener('change', updateUI);
+    }
+
+    if (scaleRow) {
+      stars.forEach(function(btn) {
+        btn.addEventListener('mouseenter', function() {
+          if (dnsuCb && dnsuCb.checked) return;
+          var v = parseInt(btn.getAttribute('data-value'), 10);
+          setStarsHighlight(v);
+        });
+        btn.addEventListener('click', function() {
+          if (dnsuCb && dnsuCb.checked) return;
+          var v = parseInt(btn.getAttribute('data-value'), 10);
+          starsInput.value = v;
+          setStarsHighlight(v);
+          updateUI();
+        });
+      });
+      scaleRow.addEventListener('mouseleave', function() {
+        var val = parseInt(starsInput.value, 10) || 0;
+        setStarsHighlight(val);
+      });
+    }
+
+    form.addEventListener('submit', function(e) {
+      var dnsu = dnsuCb && dnsuCb.checked;
+      if (!dnsu && !starsInput.value) {
+        e.preventDefault();
+        alert('Please select a rating.');
+        return;
+      }
+      if (!dnsu && parseInt(starsInput.value, 10) === 1) {
+        var comment = form.querySelector('textarea[name="comment"]');
+        if (comment && !comment.value.trim()) {
+          e.preventDefault();
+          alert('A comment is required for severely disrupted rides.');
+          return;
+        }
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OnTheWay</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="{% static 'autocomplete.js' %}" defer></script>
+    <script src="{% static 'ridemap.js' %}" defer></script>
+    <script src="{% static 'livemap.js' %}" defer></script>
+    <script src="{% static 'datepicker.js' %}" defer></script>
+    <script src="{% static 'detour.js' %}" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="app-header-left">
+          <img src="{% static 'OTWlogo.jpg' %}" alt="OnTheWay" class="logo" />
+        </div>
+        <div class="app-header-right">
+          {% if user.is_authenticated %}
+            <a href="{% url 'rides:index' %}" class="nav-link">Drive</a>
+            <a href="{% url 'rides:rider_search' %}" class="nav-link">Ride</a>
+            <a href="{% url 'rides:my_requests' %}" class="nav-link">My Requests</a>
+            <a href="{% url 'rides:ratings' %}" class="nav-link">Ratings</a>
+            <span class="nav-sep"></span>
+            <a href="{% url 'rides:my_profile' %}" class="user-pill">
+              <span class="user-avatar">{{ user.first_name|default:user.username|truncatechars:1 }}</span>
+              <span>{{ user.first_name|default:user.username }}</span>
+            </a>
+            <a href="{% url 'logout' %}" class="nav-link">Sign out</a>
+          {% else %}
+            <a href="{% url 'login' %}" class="nav-link">Sign in</a>
+            <a href="{% url 'signup' %}" class="nav-link" style="background:rgba(255,255,255,.15);">Sign up</a>
+          {% endif %}
+        </div>
+      </header>
+
+      <main class="app-main">
+        {% if messages %}
+          <div class="flash-messages">
+            {% for message in messages %}
+              <div class="flash flash-{{ message.tags }}">
+                <span class="flash-text">{{ message }}</span>
+                <button class="flash-close" onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+# PROJECT OVERVIEW
+HandyRides, Inc. is a Django-based web application designed to help event attendees find and coordinate shared rides. The application focuses on events where participants go through a pre-registration process and have a common destination with defined start and end times. Users can search for other registrants by location to find potential ride-sharing partners, making transportation more economical and social. The platform aims to integrate with event registration platforms like eVite and leverage attendee data to facilitate carpooling.
+
+# TECH STACK
+Programming Language: Python
+Web Framework: Django (version 3.1.6)
+Database: SQLite
+Frontend: HTML, CSS, JavaScript
+Package Manager: Pip (or Conda for Anaconda users)
+Hosting/Development Tools:
+Local Django development server (python manage.py runserver)
+Fixtures for preloading data (python manage.py loaddata)
+Forms for handling user input (forms.py)
+Views for processing search requests (views.py)
+
+# IMPORTANT INSTRUCTIONS
+- Always include comments to properly document the code.
+- Always suggest the minimal amount of changes necessary to fix the issue or address the user's request.
+- Do not remove existing comments or code if it isn't necessary to fix the issue or address the user's request.

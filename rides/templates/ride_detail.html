@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load profile_tags %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Ride details</h1>
+    <p class="page-subtitle">Manage this ride and review requests.</p>
+  </div>
+  <div>
+    <a href="{% url 'rides:index' %}" class="btn-secondary btn-sm">&larr; Your rides</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ride-detail-header">
+    <div class="ride-route">
+      <div class="route-point">
+        <span class="route-dot"></span>
+        <span class="route-value">{{ ride.origin }}</span>
+      </div>
+      <div class="route-point">
+        <span class="route-dot end"></span>
+        <span class="route-value">{{ ride.destination }}{% if ride.destination_state %}, {{ ride.destination_state }}{% endif %}</span>
+      </div>
+    </div>
+    <span class="badge badge-{{ ride.status }}">{{ ride.get_status_display }}</span>
+  </div>
+
+  <div class="ride-detail-grid">
+    <div class="ride-detail-item">
+      <h3>Departure</h3>
+      <p>{{ ride.departure_time|date:"M j, Y" }} &middot; {{ ride.departure_time|time:"g:i A" }}</p>
+    </div>
+    <div class="ride-detail-item">
+      <h3>State</h3>
+      <p>{{ ride.destination_state|default:"--" }}</p>
+    </div>
+    <div class="ride-detail-item">
+      <h3>Seats</h3>
+      <p>{{ ride.total_seats }}</p>
+    </div>
+    <div class="ride-detail-item">
+      <h3>Price</h3>
+      <p>{% if ride.price_per_seat %}${{ ride.price_per_seat }} / seat{% else %}Free{% endif %}</p>
+    </div>
+  </div>
+
+  {% if ride.notes %}
+    <div class="ride-notes">
+      <h3>Notes</h3>
+      <p>{{ ride.notes }}</p>
+    </div>
+  {% endif %}
+
+  <div class="detail-actions">
+    {% if ride.status != "completed" and ride.departure_time < now %}
+      <form method="post" action="{% url 'rides:complete_ride' pk=ride.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn-primary btn-sm">Mark as completed</button>
+      </form>
+    {% endif %}
+    <a href="{% url 'rides:edit_ride' pk=ride.pk %}" class="btn-secondary btn-sm">Edit</a>
+    <a href="{% url 'rides:delete_ride' pk=ride.pk %}" class="btn-danger btn-sm">Delete</a>
+  </div>
+</div>
+
+<div class="ride-map mt-lg" data-rides="{{ ride_json }}"></div>
+
+<div class="card mt-lg">
+  <h2 class="section-title">Rider requests</h2>
+  {% if ride.requests.all %}
+    <div class="card-list">
+      {% for req in ride.requests.all %}
+        <div class="request-card">
+          <div class="request-info">
+            <span class="request-name">{% user_chip req.rider %}</span>
+            <span class="request-detail">
+              {{ req.seats_requested }} seat{{ req.seats_requested|pluralize }}
+              &middot; {{ req.created_at|date:"M j, g:i A" }}
+            </span>
+          </div>
+          <div class="request-actions">
+            {% if req.status == "pending" %}
+              <form method="post" action="{% url 'rides:accept_request' pk=ride.pk req_pk=req.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-primary btn-sm">Accept</button>
+              </form>
+              <form method="post" action="{% url 'rides:reject_request' pk=ride.pk req_pk=req.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger btn-sm">Reject</button>
+              </form>
+            {% else %}
+              <span class="badge badge-{{ req.status }}">{{ req.get_status_display }}</span>
+              {% if req.status == "accepted" %}
+                <a href="mailto:{{ req.rider.email }}" class="btn-secondary btn-sm">Email</a>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p style="color:#6b7280; margin:0;">No requests yet. Riders will appear here once they find your ride.</p>
+  {% endif %}
+</div>
+{% endblock %}

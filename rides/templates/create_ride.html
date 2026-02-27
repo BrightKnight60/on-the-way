@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Offer a ride</h1>
+    <p class="page-subtitle">Share your upcoming trip and let riders join.</p>
+  </div>
+</div>
+
+<div class="card">
+  <form method="post" class="form">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="form-error-banner">
+        {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {# Hidden fields (lat/lng + route data) #}
+    {{ form.origin_lat }}
+    {{ form.origin_lng }}
+    {{ form.dest_lat }}
+    {{ form.dest_lng }}
+    {{ form.route_polyline }}
+    {{ form.route_duration }}
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label for="{{ form.origin.id_for_label }}">Pickup / Starting point</label>
+        {{ form.origin }}
+        {{ form.origin.errors }}
+      </div>
+      <div class="form-field">
+        <label for="{{ form.destination.id_for_label }}">Destination</label>
+        {{ form.destination }}
+        {{ form.destination.errors }}
+      </div>
+      <div class="form-field">
+        <label for="{{ form.destination_state.id_for_label }}">Destination state (2-letter)</label>
+        {{ form.destination_state }}
+        {{ form.destination_state.errors }}
+      </div>
+      <div class="form-field">
+        <label for="{{ form.departure_time.id_for_label }}">Departure time</label>
+        {{ form.departure_time }}
+        {{ form.departure_time.errors }}
+      </div>
+      <div class="form-field">
+        <label for="{{ form.total_seats.id_for_label }}">Available seats</label>
+        {{ form.total_seats }}
+        {{ form.total_seats.errors }}
+      </div>
+      <div class="form-field">
+        <label for="{{ form.price_per_seat.id_for_label }}">Price per seat (optional)</label>
+        {{ form.price_per_seat }}
+        {{ form.price_per_seat.errors }}
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label for="{{ form.max_detour_minutes.id_for_label }}">Max detour to pick up riders</label>
+      <div class="slider-row">
+        {{ form.max_detour_minutes }}
+        <span class="slider-value" id="detour-label">{{ form.max_detour_minutes.value|default:"5" }} min</span>
+      </div>
+      <span class="form-help">How far out of your way you're willing to go for a rider pickup.</span>
+    </div>
+
+    <div class="form-field">
+      <label for="{{ form.notes.id_for_label }}">Notes for riders (optional)</label>
+      {{ form.notes }}
+    </div>
+
+    <div class="live-map mt-lg"
+         data-origin-input="id_origin"
+         data-dest-input="id_destination"></div>
+
+    <div class="form-actions">
+      <a href="{% url 'rides:index' %}" class="btn-secondary">Cancel</a>
+      <button type="submit" class="btn-primary">Publish ride</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function() {
+  var slider = document.getElementById("{{ form.max_detour_minutes.id_for_label }}");
+  var label = document.getElementById("detour-label");
+  if (slider && label) {
+    slider.addEventListener("input", function() {
+      label.textContent = this.value + " min";
+    });
+  }
+})();
+</script>
+{% endblock %}

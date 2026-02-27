@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="drive-page">
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Your rides</h1>
+    <p class="page-subtitle">Manage trips you are driving.</p>
+  </div>
+  <div>
+    <a href="{% url 'rides:create_ride' %}" class="btn-primary">+ Offer a ride</a>
+  </div>
+</div>
+
+{% if rides %}
+  <div class="card-list">
+    {% for ride in rides %}
+      <a href="{% url 'rides:ride_detail' pk=ride.pk %}" class="ride-card">
+        <div class="ride-main">
+          <div class="ride-route">
+            <div class="route-point">
+              <span class="route-dot"></span>
+              <span class="route-value">{{ ride.origin }}</span>
+            </div>
+            <div class="route-point">
+              <span class="route-dot end"></span>
+              <span class="route-value">{{ ride.destination }}{% if ride.destination_state %}, {{ ride.destination_state }}{% endif %}</span>
+            </div>
+          </div>
+          <div class="ride-meta">
+            <span>{{ ride.departure_time|date:"M j, Y" }}</span>
+            <span>{{ ride.departure_time|time:"g:i A" }}</span>
+            <span class="badge badge-{{ ride.status }}">{{ ride.get_status_display }}</span>
+          </div>
+        </div>
+        <div class="ride-secondary">
+          <span>{{ ride.total_seats }} seat{{ ride.total_seats|pluralize }}</span>
+          {% if ride.price_per_seat %}
+            <span>${{ ride.price_per_seat }} / seat</span>
+          {% else %}
+            <span>Free ride</span>
+          {% endif %}
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state">
+    <h2>No rides yet</h2>
+    <p>Heading somewhere? Offer a ride and split costs with riders going your way.</p>
+    <a href="{% url 'rides:create_ride' %}" class="btn-primary">Offer a ride</a>
+  </div>
+{% endif %}
+</div>
+{% endblock %}

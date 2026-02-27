@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-card card">
+  <h1 class="page-title">Create your account</h1>
+  <p class="page-subtitle">Join OnTheWay to drive or ride.</p>
+
+  <form method="post" class="form">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="form-error-banner">
+        {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="form-field">
+      <label for="{{ form.name.id_for_label }}">Name</label>
+      {{ form.name }}
+      {{ form.name.errors }}
+    </div>
+
+    <div class="form-field">
+      <label for="{{ form.username.id_for_label }}">Email</label>
+      {{ form.username }}
+      {{ form.username.errors }}
+    </div>
+
+    <div class="form-field">
+      <label for="{{ form.password1.id_for_label }}">Password</label>
+      {{ form.password1 }}
+      {% if form.password1.help_text %}
+        <span class="form-help">{{ form.password1.help_text }}</span>
+      {% endif %}
+      {{ form.password1.errors }}
+    </div>
+
+    <div class="form-field">
+      <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+      {{ form.password2 }}
+      {{ form.password2.errors }}
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" style="width:100%;">Create account</button>
+    </div>
+  </form>
+
+  <p class="auth-footer">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+</div>
+{% endblock %}

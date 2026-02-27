@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load profile_tags %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Ride details</h1>
+    <p class="page-subtitle">View your ride request and contact your driver.</p>
+  </div>
+  <div>
+    <a href="{% url 'rides:my_requests' %}" class="btn-secondary btn-sm">&larr; My requests</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ride-detail-header">
+    <div class="ride-route">
+      <div class="route-point">
+        <span class="route-dot"></span>
+        <span class="route-value">{{ ride.origin }}</span>
+      </div>
+      <div class="route-point">
+        <span class="route-dot end"></span>
+        <span class="route-value">{{ ride.destination }}{% if ride.destination_state %}, {{ ride.destination_state }}{% endif %}</span>
+      </div>
+    </div>
+    <span class="badge badge-{{ ride.status }}">{{ ride.get_status_display }}</span>
+  </div>
+
+  <div class="ride-detail-grid">
+    <div class="ride-detail-item">
+      <h3>Your request</h3>
+      <p>{{ req.seats_requested }} seat{{ req.seats_requested|pluralize }} &middot; <span class="badge badge-{{ req.status }}">{{ req.get_status_display }}</span></p>
+    </div>
+    <div class="ride-detail-item">
+      <h3>Driver</h3>
+      <p>{% user_chip ride.driver %}</p>
+    </div>
+    <div class="ride-detail-item">
+      <h3>Departure</h3>
+      <p>{{ ride.departure_time|date:"M j, Y" }} &middot; {{ ride.departure_time|time:"g:i A" }}</p>
+    </div>
+    <div class="ride-detail-item">
+      <h3>State</h3>
+      <p>{{ ride.destination_state|default:"--" }}</p>
+    </div>
+    <div class="ride-detail-item">
+      <h3>Seats</h3>
+      <p>{{ ride.total_seats }}</p>
+    </div>
+    <div class="ride-detail-item">
+      <h3>Price</h3>
+      <p>{% if ride.price_per_seat %}${{ ride.price_per_seat }} / seat{% else %}Free{% endif %}</p>
+    </div>
+  </div>
+
+  {% if ride.notes %}
+    <div class="ride-notes">
+      <h3>Notes</h3>
+      <p>{{ ride.notes }}</p>
+    </div>
+  {% endif %}
+
+  <div class="detail-actions">
+    {% if req.status == "accepted" %}
+      <a href="mailto:{{ ride.driver.email }}" class="btn-secondary btn-sm">Email driver</a>
+    {% endif %}
+    {% if req.status == "pending" %}
+      <form method="post" action="{% url 'rides:cancel_request' req_pk=req.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn-danger btn-sm">Cancel request</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="ride-map mt-lg" data-rides="{{ ride_json }}"></div>
+{% endblock %}

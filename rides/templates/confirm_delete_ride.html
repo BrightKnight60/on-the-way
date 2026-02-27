@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Delete ride</h1>
+    <p class="page-subtitle">This action cannot be undone.</p>
+  </div>
+</div>
+
+<div class="card confirm-card">
+  <p>Are you sure you want to delete the ride from <strong>{{ ride.origin }}</strong> to <strong>{{ ride.destination }}</strong> on {{ ride.departure_time|date:"M j, Y" }}?</p>
+
+  <form method="post" class="form-actions" style="justify-content: flex-end;">
+    {% csrf_token %}
+    <a href="{% url 'rides:ride_detail' pk=ride.pk %}" class="btn-secondary">Cancel</a>
+    <button type="submit" class="btn-danger">Delete ride</button>
+  </form>
+</div>
+{% endblock %}

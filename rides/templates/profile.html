@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-page">
+  <div class="profile-header card">
+    <div class="profile-avatar-lg" style="background:{{ profile.avatar_color }};">
+      {{ profile.initial }}
+    </div>
+    <div class="profile-identity">
+      <h1 class="profile-name">{{ profile_user.first_name|default:profile_user.username }}</h1>
+      <p class="profile-email">{{ profile_user.email }}</p>
+    </div>
+  </div>
+
+  <div class="profile-stats">
+    <div class="stat-card card">
+      <span class="stat-number">{{ rides_offered }}</span>
+      <span class="stat-label">Rides offered</span>
+    </div>
+    <div class="stat-card card">
+      <span class="stat-number">{{ rides_taken }}</span>
+      <span class="stat-label">Rides taken</span>
+    </div>
+    <div class="stat-card card">
+      <span class="stat-number">{% if avg_rating %}{{ avg_rating }} ★{% else %}—{% endif %}</span>
+      <span class="stat-label">{% if rating_count %}Avg rating ({{ rating_count }}){% else %}Avg rating{% endif %}</span>
+    </div>
+    <div class="stat-card card">
+      <span class="stat-number">{{ profile_user.date_joined|date:"M Y" }}</span>
+      <span class="stat-label">Joined</span>
+    </div>
+  </div>
+
+  <div class="card mt-lg">
+    <h2 class="section-title">About</h2>
+    {% if is_own %}
+      <form method="post" class="form">
+        {% csrf_token %}
+        <div class="form-field">
+          <label for="id_bio">{{ form.bio.label }}</label>
+          {{ form.bio }}
+          {% if form.bio.errors %}
+            <ul class="errorlist">{% for e in form.bio.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+          {% endif %}
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary btn-sm">Save profile</button>
+        </div>
+      </form>
+    {% else %}
+      {% if profile.bio %}
+        <p class="profile-bio">{{ profile.bio|linebreaksbr }}</p>
+      {% else %}
+        <p class="profile-bio muted">This user hasn't written a bio yet.</p>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,146 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OnTheWay</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}" />
+    <style>
+      .splash {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: #f6f6f6;
+        text-align: center;
+        padding: 2rem 1.25rem;
+      }
+
+      .splash-logo {
+        width: 280px;
+        border-radius: 14px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+      }
+
+      .splash-heading {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem;
+        color: #000;
+      }
+
+      .splash-sub {
+        font-size: 1.05rem;
+        color: #6b7280;
+        margin: 0 0 2rem;
+        max-width: 420px;
+      }
+
+      .splash-steps {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 2.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+        max-width: 380px;
+        text-align: left;
+      }
+
+      .splash-steps li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+        font-size: 0.92rem;
+        color: #374151;
+        line-height: 1.45;
+      }
+
+      .step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        min-width: 26px;
+        border-radius: 50%;
+        background: #000;
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+
+      .splash-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 2rem;
+        background: #000;
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+        text-decoration: none;
+      }
+
+      .splash-cta:hover {
+        background: #222;
+      }
+
+      .splash-cta svg {
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
+      }
+
+      .splash-skip {
+        margin-top: 0.75rem;
+        font-size: 0.8rem;
+        color: #9ca3af;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="splash">
+      <img src="{% static 'OTWlogo.jpg' %}" alt="OnTheWay" class="splash-logo" />
+      <h1 class="splash-heading">Welcome to OnTheWay</h1>
+      <p class="splash-sub">Share rides with people headed your way. Drive, ride, or both.</p>
+
+      <ul class="splash-steps">
+        <li>
+          <span class="step-num">1</span>
+          <span><strong>Search</strong> for rides by pickup and destination. Drivers whose routes pass near you show up automatically.</span>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <span><strong>Request a seat</strong> on any open ride. The driver will accept or decline.</span>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <span><strong>Offer a ride</strong> if you're driving. Set your route, seats, and how far you'll detour for pickups.</span>
+        </li>
+      </ul>
+
+      <a href="{% url 'rides:rider_search' %}" class="splash-cta" id="splash-go">
+        Get started
+        <svg viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
+      </a>
+      <p class="splash-skip">You won't see this page again.</p>
+    </div>
+
+    <script>
+      // Set cookie so splash only shows on first visit
+      document.getElementById("splash-go").addEventListener("click", function () {
+        document.cookie = "otw_visited=1; path=/; max-age=" + (365 * 24 * 60 * 60) + "; SameSite=Lax";
+      });
+      // Also set it on any navigation away (in case they use the back button etc.)
+      document.cookie = "otw_visited=1; path=/; max-age=" + (365 * 24 * 60 * 60) + "; SameSite=Lax";
+    </script>
+  </body>
+</html>
