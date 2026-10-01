@@ -28,6 +28,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY', default='dev-key-only')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = 'RENDER' not in os.environ
 
+# Auto-login as a demo user and run on a disposable SQLite database that is
+# reset and reseeded each time the server starts (see gunicorn.conf.py).
+DEMO_MODE = DEBUG or os.environ.get('DEMO_MODE', 'true').lower() in ('1', 'true', 'yes')
+
 ALLOWED_HOSTS = []
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
@@ -86,7 +90,7 @@ WSGI_APPLICATION = 'HandyRides.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-if os.environ.get('DATABASE_URL'):
+if os.environ.get('DATABASE_URL') and not DEMO_MODE:
     DATABASES = {
         'default': dj_database_url.config(conn_max_age=600)
     }

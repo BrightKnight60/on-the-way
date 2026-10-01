@@ -23,7 +23,7 @@ class AutoLoginDemoMiddleware:
         from django.conf import settings
 
         if (
-            settings.DEBUG
+            settings.DEMO_MODE
             and not request.user.is_authenticated
             and not request.COOKIES.get(self.COOKIE_NAME)
         ):
